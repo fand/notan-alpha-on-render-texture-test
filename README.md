@@ -5,4 +5,4 @@
 - top-left: Original Ferris PNG
 - top-right: Semi-transparent PNG I made with Affinity Photo
 - bottom-left: Semi-transparent PNG rendered on a RenderTexture and rendered on the canvas
-- bottom-left: Semi-transparent PNG rendered on a RenderTexture **twice** and rendered on the canvas
+- bottom-right: Semi-transparent PNG rendered on a RenderTexture **twice** and rendered on the canvas
