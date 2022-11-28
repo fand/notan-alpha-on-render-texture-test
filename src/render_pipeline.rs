@@ -32,21 +32,24 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
     void main() {
         vec4 color = texture(src, v_texcoord);
         // color.a = pow(color.a, 1.0 / 2.2);
+        // color.rgb *= color.a;
         outColor = color;
     }
     "#
 };
 
 #[derive(Clone)]
-pub struct Workaround {
+pub struct RenderPipeline {
+    renderer: Renderer,
     pipeline: Pipeline,
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     uniform_buffer: Buffer,
+    clear_color: Color,
 }
 
-impl Workaround {
-    pub fn new(gfx: &mut Graphics) -> Self {
+impl RenderPipeline {
+    pub fn new(gfx: &mut Graphics, clear_color: Color) -> Self {
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float32x3)
             .attr(1, VertexFormat::Float32x2);
@@ -54,7 +57,7 @@ impl Workaround {
         let pipeline = gfx
             .create_pipeline()
             .from(&VERTEX_SHADER, &FRAGMENT_SHADER)
-            .with_color_blend(BlendMode::OVER)
+            .with_color_blend(BlendMode::NORMAL)
             .with_vertex_info(&vertex_info)
             .with_texture_location(0, "src")
             .build()
@@ -63,10 +66,10 @@ impl Workaround {
         #[rustfmt::skip]
         let vertices = [
             //pos               //coords
-            1.0,  1.0, 0.0,     1.0, 1.0,
-            1.0, -1.0, 0.0,     1.0, 0.0,
-            -1.0, -1.0, 0.0,    0.0, 0.0,
-            -1.0, 1.0, 0.0,    0.0, 1.0
+            1.0,  1.0, 0.0,     1.0, 0.0,
+            1.0, -1.0, 0.0,     1.0, 1.0,
+            -1.0, -1.0, 0.0,    0.0, 1.0,
+            -1.0, 1.0, 0.0,    0.0, 0.0
         ];
 
         #[rustfmt::skip]
@@ -96,37 +99,57 @@ impl Workaround {
             .build()
             .unwrap();
 
+        let renderer = gfx.create_renderer();
+
         Self {
+            renderer,
             pipeline,
             vertex_buffer,
             index_buffer,
             uniform_buffer,
+            clear_color,
         }
     }
 
-    pub fn draw(
-        &self,
-        device: &mut Device,
-        src: &Texture,
-        dst: &RenderTexture,
-        uniform_data: Vec<f32>,
-    ) {
-        device.set_buffer_data(&self.uniform_buffer, &uniform_data);
+    pub fn start_rendering(&mut self) {
+        self.renderer
+            .begin(Some(&ClearOptions::color(self.clear_color)));
+    }
 
-        let mut renderer = device.create_renderer();
+    pub fn render_texture(&mut self, src: &Texture, (x, y, w, h): (f32, f32, f32, f32)) {
+        self.renderer.set_viewport(x, y, w, h);
 
-        renderer.begin(Some(&ClearOptions::color(Color::TRANSPARENT)));
-
-        renderer.set_pipeline(&self.pipeline);
-        renderer.bind_texture_slot(0, 0, src);
-        renderer.bind_buffers(&[
+        self.renderer.set_pipeline(&self.pipeline);
+        self.renderer.bind_texture_slot(0, 0, src);
+        self.renderer.bind_buffers(&[
             &self.vertex_buffer,
             &self.index_buffer,
             &self.uniform_buffer,
         ]);
-        renderer.draw(0, 6);
-        renderer.end();
 
-        device.render_to(dst, renderer.commands());
+        self.renderer.draw(0, 6);
     }
+
+    pub fn blit(&mut self, gfx: &mut Graphics) {
+        self.renderer.end();
+        gfx.render(&self.renderer);
+    }
+
+    // pub fn render_draw(&self, draw: &mut Draw) {
+    //     let mut renderer = gfx.create_renderer();
+
+    //     renderer.begin(Some(&ClearOptions::color(Color::TRANSPARENT)));
+
+    //     renderer.set_pipeline(&self.pipeline);
+    //     renderer.bind_texture_slot(0, 0, src);
+    //     renderer.bind_buffers(&[
+    //         &self.vertex_buffer,
+    //         &self.index_buffer,
+    //         &self.uniform_buffer,
+    //     ]);
+    //     renderer.draw(0, 6);
+    //     renderer.end();
+
+    //     gfx.render(&renderer);
+    // }
 }

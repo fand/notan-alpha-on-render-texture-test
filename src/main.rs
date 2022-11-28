@@ -1,7 +1,9 @@
 use notan::draw::*;
 use notan::prelude::*;
+use render_pipeline::RenderPipeline;
 use workaround::Workaround;
 
+mod render_pipeline;
 mod workaround;
 
 const W: f32 = 800.0;
@@ -16,6 +18,7 @@ struct State {
     rt1: RenderTexture,
     rt2: RenderTexture,
     workaround: Workaround,
+    pipeline: RenderPipeline,
 }
 
 #[notan_main]
@@ -34,10 +37,12 @@ fn init(gfx: &mut Graphics) -> State {
 
     let rt0 = gfx
         .create_render_texture(TEX_W as i32, TEX_H as i32)
+        .with_format(TextureFormat::Rgba32)
         .build()
         .unwrap();
     let rt1 = gfx
         .create_render_texture(TEX_W as i32, TEX_H as i32)
+        .with_format(TextureFormat::Rgba32)
         .build()
         .unwrap();
     let rt2 = gfx
@@ -47,38 +52,46 @@ fn init(gfx: &mut Graphics) -> State {
 
     let workaround = Workaround::new(gfx);
 
+    let pipeline = RenderPipeline::new(gfx, Color::GRAY);
+
     State {
         textures,
         rt0,
         rt1,
         rt2,
         workaround,
+        pipeline,
     }
 }
 
 fn texture(gfx: &mut Graphics, img: &[u8]) -> Texture {
-    gfx.create_texture().from_image(img).build().unwrap()
+    gfx.create_texture()
+        .from_image(img)
+        // .with_premultiplied_alpha()
+        .build()
+        .unwrap()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
-    let mut draw = gfx.create_draw();
-    draw.clear(Color::GRAY);
+    // let mut draw = gfx.create_draw();
+    // draw.clear(Color::GRAY);
+    state.pipeline.start_rendering();
 
     let width = W / 2.0;
     let scale = width / state.textures[0].width();
 
     // Draw normal PNG
     {
-        draw.image(&state.textures[0])
-            .translate(0.0, 0.0)
-            .scale(scale, scale);
+        state
+            .pipeline
+            .render_texture(&state.textures[0], (0.0, 0.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG
     {
-        draw.image(&state.textures[1])
-            .translate(width, 0.0)
-            .scale(scale, scale);
+        state
+            .pipeline
+            .render_texture(&state.textures[1], (W / 2.0, 0.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG with RenderTexture
@@ -87,9 +100,9 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
             .workaround
             .draw(&mut gfx.device, &state.textures[1], &state.rt0, vec![1.0]);
 
-        draw.image(&state.rt0)
-            .translate(0.0, H / 2.0)
-            .scale(scale, scale);
+        state
+            .pipeline
+            .render_texture(&state.rt2, (0.0, H / 2.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG with RenderTexture twice
@@ -102,24 +115,12 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
             .workaround
             .draw(&mut gfx.device, &state.rt1, &state.rt2, vec![1.0]);
 
-        // let mut d1 = gfx.create_draw();
-        // d1.set_size(TEX_W, TEX_H);
-        // d1.clear(Color::TRANSPARENT);
-        // d1.image(&state.textures[1])
-        //     .scale_from((TEX_W / 2.0, TEX_H / 2.0), (1.0, -1.0));
-        // gfx.render_to(&state.rt1, &d1);
-
-        // let mut d2 = gfx.create_draw();
-        // d2.set_size(TEX_W, TEX_H);
-        // d2.clear(Color::TRANSPARENT);
-        // d2.image(&state.rt1)
-        //     .scale_from((TEX_W / 2.0, TEX_H / 2.0), (1.0, -1.0));
-        // gfx.render_to(&state.rt2, &d2);
-
-        draw.image(&state.rt2)
-            .translate(width, H / 2.0)
-            .scale(scale, scale);
+        state
+            .pipeline
+            .render_texture(&state.rt2, (W / 2.0, H / 2.0, W / 2.0, H / 2.0));
     }
 
-    gfx.render(&draw);
+    state.pipeline.blit(gfx);
+
+    // gfx.render(&draw);
 }
