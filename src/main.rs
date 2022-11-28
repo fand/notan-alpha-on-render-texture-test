@@ -40,7 +40,11 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn texture(gfx: &mut Graphics, img: &[u8]) -> Texture {
-    gfx.create_texture().from_image(img).build().unwrap()
+    gfx.create_texture()
+        .from_image(img)
+        .with_premultiplied_alpha()
+        .build()
+        .unwrap()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
@@ -50,27 +54,23 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let width = W / 2.0;
     let scale = width / state.textures[0].width();
 
+    draw.set_blend_mode(Some(BlendMode::OVER));
+
     // Draw normal PNG
-    {
-        draw.image(&state.textures[0])
-            .translate(0.0, 0.0)
-            .scale(scale, scale);
-    }
+    draw.image(&state.textures[0])
+        .translate(0.0, 0.0)
+        .scale(scale, scale);
 
     // Draw transparent PNG
-    {
-        draw.image(&state.textures[1])
-            .translate(width, 0.0)
-            .scale(scale, scale);
-    }
+    draw.image(&state.textures[1])
+        .translate(width, 0.0)
+        .scale(scale, scale);
 
     // Draw transparent PNG with RenderTexture
     {
-        let mut d = gfx.create_draw();
-        d.set_size(TEX_W, TEX_H);
+        let mut d = state.rt1.create_draw();
         d.clear(Color::TRANSPARENT);
-        d.image(&state.textures[1])
-            .scale_from((TEX_W / 2.0, TEX_H / 2.0), (1.0, -1.0));
+        d.image(&state.textures[1]).blend_mode(BlendMode::OVER);
         gfx.render_to(&state.rt1, &d);
 
         draw.image(&state.rt1)
@@ -80,18 +80,9 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     // Draw transparent PNG with RenderTexture twice
     {
-        let mut d1 = gfx.create_draw();
-        d1.set_size(TEX_W, TEX_H);
-        d1.clear(Color::TRANSPARENT);
-        d1.image(&state.textures[1])
-            .scale_from((TEX_W / 2.0, TEX_H / 2.0), (1.0, -1.0));
-        gfx.render_to(&state.rt1, &d1);
-
-        let mut d2 = gfx.create_draw();
-        d2.set_size(TEX_W, TEX_H);
+        let mut d2 = state.rt2.create_draw();
         d2.clear(Color::TRANSPARENT);
-        d2.image(&state.rt1)
-            .scale_from((TEX_W / 2.0, TEX_H / 2.0), (1.0, -1.0));
+        d2.image(&state.rt1).blend_mode(BlendMode::OVER);
         gfx.render_to(&state.rt2, &d2);
 
         draw.image(&state.rt2)
