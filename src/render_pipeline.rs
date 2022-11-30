@@ -30,10 +30,7 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
     };
 
     void main() {
-        vec4 color = texture(src, v_texcoord);
-        // color.a = pow(color.a, 1.0 / 2.2);
-        // color.rgb *= color.a;
-        outColor = color;
+        outColor = texture(src, v_texcoord);
     }
     "#
 };
@@ -134,22 +131,4 @@ impl RenderPipeline {
         self.renderer.end();
         gfx.render(&self.renderer);
     }
-
-    // pub fn render_draw(&self, draw: &mut Draw) {
-    //     let mut renderer = gfx.create_renderer();
-
-    //     renderer.begin(Some(&ClearOptions::color(Color::TRANSPARENT)));
-
-    //     renderer.set_pipeline(&self.pipeline);
-    //     renderer.bind_texture_slot(0, 0, src);
-    //     renderer.bind_buffers(&[
-    //         &self.vertex_buffer,
-    //         &self.index_buffer,
-    //         &self.uniform_buffer,
-    //     ]);
-    //     renderer.draw(0, 6);
-    //     renderer.end();
-
-    //     gfx.render(&renderer);
-    // }
 }

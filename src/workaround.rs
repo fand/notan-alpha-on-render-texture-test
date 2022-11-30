@@ -30,9 +30,7 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
     };
 
     void main() {
-        vec4 color = texture(src, v_texcoord);
-        // color.a = pow(color.a, 1.0 / 2.2);
-        outColor = color;
+        outColor = texture(src, v_texcoord);
     }
     "#
 };

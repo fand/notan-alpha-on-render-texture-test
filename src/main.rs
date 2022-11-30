@@ -65,20 +65,11 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn texture(gfx: &mut Graphics, img: &[u8]) -> Texture {
-    gfx.create_texture()
-        .from_image(img)
-        // .with_premultiplied_alpha()
-        .build()
-        .unwrap()
+    gfx.create_texture().from_image(img).build().unwrap()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
-    // let mut draw = gfx.create_draw();
-    // draw.clear(Color::GRAY);
     state.pipeline.start_rendering();
-
-    let width = W / 2.0;
-    let scale = width / state.textures[0].width();
 
     // Draw normal PNG
     {
@@ -121,6 +112,4 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     }
 
     state.pipeline.blit(gfx);
-
-    // gfx.render(&draw);
 }
