@@ -67,6 +67,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     // Draw transparent PNG with RenderTexture
     {
         let mut d = gfx.create_draw();
+        d.set_blend_mode(BlendMode::NONE);
         d.set_size(TEX_W, TEX_H);
         d.clear(Color::TRANSPARENT);
         d.image(&state.textures[1])
@@ -81,6 +82,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     // Draw transparent PNG with RenderTexture twice
     {
         let mut d1 = gfx.create_draw();
+        d1.set_blend_mode(BlendMode::NONE);
         d1.set_size(TEX_W, TEX_H);
         d1.clear(Color::TRANSPARENT);
         d1.image(&state.textures[1])
@@ -88,6 +90,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         gfx.render_to(&state.rt1, &d1);
 
         let mut d2 = gfx.create_draw();
+        d2.set_blend_mode(BlendMode::NONE);
         d2.set_size(TEX_W, TEX_H);
         d2.clear(Color::TRANSPARENT);
         d2.image(&state.rt1)
