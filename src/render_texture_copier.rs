@@ -49,7 +49,7 @@ impl RenderTextureCopier {
         let pipeline = gfx
             .create_pipeline()
             .from(&VERTEX_SHADER, &FRAGMENT_SHADER)
-            .with_color_blend(BlendMode::OVER)
+            .with_color_blend(BlendMode::NONE)
             .with_vertex_info(&vertex_info)
             .with_texture_location(0, "src")
             .build()
