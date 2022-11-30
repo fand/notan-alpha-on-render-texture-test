@@ -1,10 +1,10 @@
 use notan::draw::*;
 use notan::prelude::*;
-use render_pipeline::RenderPipeline;
-use workaround::Workaround;
+use render_texture_copier::RenderTextureCopier;
+use render_texture_drawer::RenderTextureDrawer;
 
-mod render_pipeline;
-mod workaround;
+mod render_texture_copier;
+mod render_texture_drawer;
 
 const W: f32 = 800.0;
 const H: f32 = 600.0;
@@ -17,8 +17,8 @@ struct State {
     rt0: RenderTexture,
     rt1: RenderTexture,
     rt2: RenderTexture,
-    workaround: Workaround,
-    pipeline: RenderPipeline,
+    rt_copier: RenderTextureCopier,
+    rt_drawer: RenderTextureDrawer,
 }
 
 #[notan_main]
@@ -50,17 +50,17 @@ fn init(gfx: &mut Graphics) -> State {
         .build()
         .unwrap();
 
-    let workaround = Workaround::new(gfx);
+    let workaround = RenderTextureCopier::new(gfx);
 
-    let pipeline = RenderPipeline::new(gfx, Color::GRAY);
+    let pipeline = RenderTextureDrawer::new(gfx, Color::GRAY);
 
     State {
         textures,
         rt0,
         rt1,
         rt2,
-        workaround,
-        pipeline,
+        rt_copier: workaround,
+        rt_drawer: pipeline,
     }
 }
 
@@ -69,47 +69,47 @@ fn texture(gfx: &mut Graphics, img: &[u8]) -> Texture {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
-    state.pipeline.start_rendering();
+    state.rt_drawer.start_rendering();
 
     // Draw normal PNG
     {
         state
-            .pipeline
-            .render_texture(&state.textures[0], (0.0, 0.0, W / 2.0, H / 2.0));
+            .rt_drawer
+            .draw(&state.textures[0], (0.0, 0.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG
     {
         state
-            .pipeline
-            .render_texture(&state.textures[1], (W / 2.0, 0.0, W / 2.0, H / 2.0));
+            .rt_drawer
+            .draw(&state.textures[1], (W / 2.0, 0.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG with RenderTexture
     {
         state
-            .workaround
-            .draw(&mut gfx.device, &state.textures[1], &state.rt0, vec![1.0]);
+            .rt_copier
+            .copy(&mut gfx.device, &state.textures[1], &state.rt0);
 
         state
-            .pipeline
-            .render_texture(&state.rt2, (0.0, H / 2.0, W / 2.0, H / 2.0));
+            .rt_drawer
+            .draw(&state.rt2, (0.0, H / 2.0, W / 2.0, H / 2.0));
     }
 
     // Draw transparent PNG with RenderTexture twice
     {
         state
-            .workaround
-            .draw(&mut gfx.device, &state.textures[1], &state.rt1, vec![1.0]);
+            .rt_copier
+            .copy(&mut gfx.device, &state.textures[1], &state.rt1);
 
         state
-            .workaround
-            .draw(&mut gfx.device, &state.rt1, &state.rt2, vec![1.0]);
+            .rt_copier
+            .copy(&mut gfx.device, &state.rt1, &state.rt2);
 
         state
-            .pipeline
-            .render_texture(&state.rt2, (W / 2.0, H / 2.0, W / 2.0, H / 2.0));
+            .rt_drawer
+            .draw(&state.rt2, (W / 2.0, H / 2.0, W / 2.0, H / 2.0));
     }
 
-    state.pipeline.blit(gfx);
+    state.rt_drawer.render(gfx);
 }

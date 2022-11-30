@@ -25,9 +25,6 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
     layout(location = 0) in vec2 v_texcoord;
 
     layout(binding = 0) uniform sampler2D src;
-    layout(set = 0, binding = 0) uniform Locals {
-        float intensity;
-    };
 
     void main() {
         outColor = texture(src, v_texcoord);
@@ -36,14 +33,14 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
 };
 
 #[derive(Clone)]
-pub struct Workaround {
+pub struct RenderTextureCopier {
     pipeline: Pipeline,
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     uniform_buffer: Buffer,
 }
 
-impl Workaround {
+impl RenderTextureCopier {
     pub fn new(gfx: &mut Graphics) -> Self {
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float32x3)
@@ -102,15 +99,7 @@ impl Workaround {
         }
     }
 
-    pub fn draw(
-        &self,
-        device: &mut Device,
-        src: &Texture,
-        dst: &RenderTexture,
-        uniform_data: Vec<f32>,
-    ) {
-        device.set_buffer_data(&self.uniform_buffer, &uniform_data);
-
+    pub fn copy(&self, device: &mut Device, src: &Texture, dst: &RenderTexture) {
         let mut renderer = device.create_renderer();
 
         renderer.begin(Some(&ClearOptions::color(Color::TRANSPARENT)));

@@ -36,7 +36,7 @@ const FRAGMENT_SHADER: ShaderSource = notan::fragment_shader! {
 };
 
 #[derive(Clone)]
-pub struct RenderPipeline {
+pub struct RenderTextureDrawer {
     renderer: Renderer,
     pipeline: Pipeline,
     vertex_buffer: Buffer,
@@ -45,7 +45,7 @@ pub struct RenderPipeline {
     clear_color: Color,
 }
 
-impl RenderPipeline {
+impl RenderTextureDrawer {
     pub fn new(gfx: &mut Graphics, clear_color: Color) -> Self {
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float32x3)
@@ -113,7 +113,7 @@ impl RenderPipeline {
             .begin(Some(&ClearOptions::color(self.clear_color)));
     }
 
-    pub fn render_texture(&mut self, src: &Texture, (x, y, w, h): (f32, f32, f32, f32)) {
+    pub fn draw(&mut self, src: &Texture, (x, y, w, h): (f32, f32, f32, f32)) {
         self.renderer.set_viewport(x, y, w, h);
 
         self.renderer.set_pipeline(&self.pipeline);
@@ -127,7 +127,7 @@ impl RenderPipeline {
         self.renderer.draw(0, 6);
     }
 
-    pub fn blit(&mut self, gfx: &mut Graphics) {
+    pub fn render(&mut self, gfx: &mut Graphics) {
         self.renderer.end();
         gfx.render(&self.renderer);
     }
